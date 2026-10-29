@@ -23,5 +23,5 @@ Run `python -m bbsdoorserver request.json` to validate a JSON contract; a valid
 request still exits 3 because door execution is disabled. Invalid input exits 2.
 No files are generated and no connection is made.
 
-See [architecture](docs/architecture.md) for the versioned session contract and
+See [architecture](architecture.md) for the versioned session contract and
 implementation gates. MysticWeb remains a future client, not a dependency.
