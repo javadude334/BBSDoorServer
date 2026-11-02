@@ -12,6 +12,10 @@
 4. [Networking and safety](networking.md) — private port 5000 and firewall planning.
 5. [Common terms and troubleshooting](troubleshooting.md).
 
+6. [Windows and Linux installation plans](installation-plans.md) — planned beginner setup flow.
+7. [Adding door games](adding-door-games.md) — required settings and dropfile formats.
+8. [Daily operations](daily-operations.md) — planned start/stop, backup, upgrade and recovery procedures.
+
 Developers and advanced operators can read the [planning hub](../README.md) and [roadmap](../roadmap.md). The Windows and Linux installation guides will be added **after** the corresponding runtimes and door execution have been verified.
 
 ## Documentation commitments
