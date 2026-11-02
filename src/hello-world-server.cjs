@@ -1,14 +1,17 @@
 "use strict";
 const net = require("node:net");
-const host = process.env.DOOR_HOST || "127.0.0.1";
-const port = Number(process.env.DOOR_PORT || 5000);
-const maxClients = 8;
+const { load } = require("./doorconfig.cjs");
+const settings = load();
+const host = process.env.DOOR_HOST || settings.server.host;
+const port = Number(process.env.DOOR_PORT || settings.server.port);
+const maxClients = settings.server.maxClients;
+const idleMilliseconds = settings.server.idleSeconds * 1000;
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Invalid DOOR_PORT");
 let clients = 0;
 const server = net.createServer((socket) => {
   if (clients >= maxClients) { socket.end("Server busy\r\n"); return; }
   clients++;
-  socket.setTimeout(120000);
+  socket.setTimeout(idleMilliseconds);
   socket.on("timeout", () => socket.end("\r\nSession timed out.\r\n"));
   socket.on("error", () => {});
   socket.on("close", () => { clients--; });
