@@ -1,5 +1,7 @@
 # BBSDoorServer
 
+**New to GitHub or Node.js?** Start with the [plain-language SysOp Guide](docs/sysop/README.md). It explains what is implemented and how to run a safe foundation test.
+
 An independent BBS door server intended to run legacy DOS doors for both traditional Mystic BBS and MysticWeb.
 
 ## Current state
