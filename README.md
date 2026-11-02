@@ -23,4 +23,8 @@ The existing Windows 10 32-bit VM is the intended game execution host. Compatibi
 - MysticWeb uses an embedded browser terminal and an authenticated relay.
 - The Door Server owns game-specific dropfiles, node allocation, execution, session cleanup, and shared game data.
 
-See [shared-client architecture](docs/shared-client-architecture.md). The example catalog under `config/` is disabled by default.
+## Planning documents
+
+**[Door Server planning hub](docs/README.md)** is the canonical entry point for our decisions, infrastructure notes, cross-platform strategy, open questions, and milestone checklist.
+
+See also [shared-client architecture](docs/shared-client-architecture.md). The example catalog under `config/` is disabled by default.
