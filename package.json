@@ -5,7 +5,8 @@
   "description": "Shared door server protocol foundation; no game execution",
   "scripts": {
     "test": "node --test tests/*.test.cjs",
-    "start": "node src/server.cjs"
+    "start": "node src/server.cjs",
+    "config": "node src/doorconfig.cjs"
   },
   "engines": {
     "node": ">=18"
