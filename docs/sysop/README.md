@@ -1,0 +1,22 @@
+# BBSDoorServer — System Operator Guide
+
+**Audience:** BBS SysOps who want to host classic door games without learning web development or writing Node.js code.
+
+> **Current status (November 2026):** This project is a **foundation/prototype**, not a playable door server. There is no active network listener, DOS launcher, dropfile writer, Mystic connector, MysticWeb terminal, or Linux execution adapter. The commands below only test the foundation.
+
+## Start here
+
+1. [What the Door Server does](overview.md) — the purpose and the parts involved.
+2. [Downloading the project and understanding GitHub](github-basics.md).
+3. [Safe first test](first-test.md) — test the foundation without opening a port or launching a game.
+4. [Networking and safety](networking.md) — private port 5000 and firewall planning.
+5. [Common terms and troubleshooting](troubleshooting.md).
+
+Developers and advanced operators can read the [planning hub](../README.md) and [roadmap](../roadmap.md). The Windows and Linux installation guides will be added **after** the corresponding runtimes and door execution have been verified.
+
+## Documentation commitments
+
+- Separate step-by-step Windows and Linux instructions, including prerequisites, screenshots, setup, upgrades, backups, and uninstall.
+- A simple per-game setup guide with supported dropfiles and compatibility notes.
+- No GitHub knowledge required for normal installation once a packaged release exists.
+- No claims that a door or OS runtime works until it has been tested.
