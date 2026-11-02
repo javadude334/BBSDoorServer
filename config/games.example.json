@@ -1,0 +1,8 @@
+[
+  {
+    "id": "yankee-trader",
+    "name": "Yankee Trader",
+    "enabled": false,
+    "maxSessions": 1
+  }
+]
