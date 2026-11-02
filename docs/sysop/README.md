@@ -2,7 +2,11 @@
 
 **Audience:** BBS SysOps who want to host classic door games without learning web development or writing Node.js code.
 
-> **Current status (November 2026):** This project is a **foundation/prototype**, not a playable door server. There is no active network listener, DOS launcher, dropfile writer, Mystic connector, MysticWeb terminal, or Linux execution adapter. The commands below only test the foundation.
+> **Current status (November 2026):** This project is a **foundation/prototype**, not a playable door server. A standalone Hello World TCP test listener is available on the feature branch, but there is no DOS launcher, dropfile writer, Mystic connector, MysticWeb terminal, or Linux execution adapter. The commands below only test the foundation.
+
+## Hello World prototype installation
+
+For the Windows 10 32-bit door-server VM, follow the [Windows Hello World installation guide](windows-hello-world.md) to install Git and Node.js, clone the prototype, run tests, and start the listener. Note that current Node.js Windows x86 support is limited; check compatibility before installing.
 
 ## Start here
 
