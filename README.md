@@ -1,32 +1,53 @@
 # BBSDoorServer
 
-**New to GitHub or Node.js?** Start with the [plain-language SysOp Guide](docs/sysop/README.md). It explains what is implemented and how to run a safe foundation test.
+**Bring classic BBS door games back to life.**
 
-An independent BBS door server intended to run legacy DOS doors for both traditional Mystic BBS and MysticWeb.
+BBSDoorServer is an open-source project to host BBS door games on a separate computer and make them available to Mystic BBS and, eventually, other BBS software and MysticWeb.
 
-## Current state
+> **Early development — not production-ready.** A standalone Hello World TCP test door is available in [draft PR #2](https://github.com/javadude334/BBSDoorServer/pull/2) on the `feature/hello-world-door` branch. It is **not yet callable from a Mystic menu**, and it does **not** run DOS doors. The default `main` branch contains only the foundation.
 
-**Foundation only — no network service, game launcher, or terminal transport is active.** The project currently includes a dependency-free Node.js session registry, validated public game metadata, capacity controls, expiring one-use attach tickets, and tests. Launch requests must eventually come from a trusted authenticated connector; the registry is not an authorization system by itself.
+## 👋 New SysOp? Start here
 
-```powershell
+You do **not** need to know Node.js or GitHub to read the guides. Start with the [SysOp Guide](docs/sysop/README.md), which explains the project in plain language.
+
+| Your computer | Step-by-step setup |
+| --- | --- |
+| **Windows** | [Windows 10 32-bit Hello World installation](docs/sysop/windows-hello-world.md) |
+| **Linux / Unix** | [Unix/Linux Hello World installation](docs/sysop/unix-hello-world.md) |
+
+**Important:** These two installation guides currently live on the `feature/hello-world-door` branch. If a link above is unavailable from `main`, use the [Windows guide on the feature branch](https://github.com/javadude334/BBSDoorServer/blob/feature/hello-world-door/docs/sysop/windows-hello-world.md) or the [Unix/Linux guide on the feature branch](https://github.com/javadude334/BBSDoorServer/blob/feature/hello-world-door/docs/sysop/unix-hello-world.md).
+
+## What works today?
+
+- Dependency-free Node.js foundation with a game catalog, session registry, capacity limits, expiring one-use attach tickets, and tests on `main`.
+- On the development branch: a LAN-only Hello World TCP listener, basic Telnet negotiation, Q-to-exit, and a network integration test.
+
+## What's coming next?
+
+1. Mystic BBS terminal connector and menu integration.
+2. Authenticated session handoff and cleanup.
+3. DOS execution, dropfile generation, and integrated FOSSIL compatibility.
+4. Linux execution adapter and additional BBS integrations.
+
+**Telnet, SSH, and RLogin callers:** the long-term design is for Mystic to retain the caller connection and bridge terminal I/O to the door server. The prototype itself does not provide SSH or RLogin listeners.
+
+## For developers
+
+- [Planning hub](docs/README.md)
+- [Shared-client architecture](docs/shared-client-architecture.md)
+- [Roadmap](docs/roadmap.md)
+- [Draft Hello World pull request](https://github.com/javadude334/BBSDoorServer/pull/2)
+
+To run the current foundation tests:
+
+```sh
 npm test
-npm start
 ```
 
-`npm start` only loads the disabled example catalog and prints status; it does not open ports or execute games.
+The prototype uses Node.js 18+ but modern supported Windows x86 builds may be unavailable. Check the platform-specific installation guide before selecting a runtime.
 
-## Target installation
+## Help and feedback
 
-The existing Windows 10 32-bit VM is the intended game execution host. Compatibility of a Node.js runtime, DOS execution environment, FOSSIL/serial bridge, and each door must be verified on that machine before activation.
+Report problems or compatibility requests through [GitHub Issues](https://github.com/javadude334/BBSDoorServer/issues). Include your operating system, Mystic version, and the steps to reproduce the issue. Never post passwords or connection secrets.
 
-## Shared clients
-
-- Mystic BBS uses a local terminal connector.
-- MysticWeb uses an embedded browser terminal and an authenticated relay.
-- The Door Server owns game-specific dropfiles, node allocation, execution, session cleanup, and shared game data.
-
-## Planning documents
-
-**[Door Server planning hub](docs/README.md)** is the canonical entry point for our decisions, infrastructure notes, cross-platform strategy, open questions, and milestone checklist.
-
-See also [shared-client architecture](docs/shared-client-architecture.md). The example catalog under `config/` is disabled by default.
+This repository is public. Game software and third-party DOS drivers are not included; verify licensing before installing or redistributing them.
