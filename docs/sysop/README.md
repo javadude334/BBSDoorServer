@@ -10,7 +10,7 @@ For the Windows 10 32-bit door-server VM, follow the [Windows Hello World instal
 
 For Linux and other Unix-like hosts, follow the [Unix/Linux Hello World installation guide](unix-hello-world.md) for prerequisites, cloning, testing, network restrictions, and troubleshooting.
 
-## Start here
+**Configure without a browser:** [DoorConfig terminal configuration editor](doorconfig.md) — numbered keyboard menus for Windows and Unix, with validation and save/backup.\n\n## Start here
 
 1. [What the Door Server does](overview.md) — the purpose and the parts involved.
 2. [Downloading the project and understanding GitHub](github-basics.md).
