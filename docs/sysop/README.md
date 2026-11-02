@@ -8,6 +8,8 @@
 
 For the Windows 10 32-bit door-server VM, follow the [Windows Hello World installation guide](windows-hello-world.md) to install Git and Node.js, clone the prototype, run tests, and start the listener. Note that current Node.js Windows x86 support is limited; check compatibility before installing.
 
+For Linux and other Unix-like hosts, follow the [Unix/Linux Hello World installation guide](unix-hello-world.md) for prerequisites, cloning, testing, network restrictions, and troubleshooting.
+
 ## Start here
 
 1. [What the Door Server does](overview.md) — the purpose and the parts involved.
