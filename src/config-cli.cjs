@@ -3,6 +3,8 @@ const path = require("node:path");
 const readline = require("node:readline");
 const { stdin, stdout } = require("node:process");
 const { read, save, validate } = require("./config-store.cjs");
+const { installation } = require("./installation.cjs");
+const installationId = installation();
 const file = path.resolve(__dirname, "../config/server.json");
 const sections = [
   { name: "Configuration", items: ["Server settings", "BBS client identifiers", "Save settings"] },
@@ -18,7 +20,7 @@ try { cfg = read(file); } catch (error) {
   process.exit(1);
 }
 const original = JSON.stringify(cfg);
-let saved = original, section = 0, selected = 0, message = "Ready";
+let saved = original, section = 0, selected = 0, message = "Installation ID ready (" + installationId.slice(0, 8) + "…)";
 const tty = Boolean(stdin.isTTY && stdout.isTTY);
 const colors = tty && !process.env.NO_COLOR;
 const paint = (code, value) => colors ? "\x1b[" + code + "m" + value + "\x1b[0m" : value;
