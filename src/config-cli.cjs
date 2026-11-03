@@ -41,6 +41,14 @@ function screen() {
   console.log(paint("93", (dirty() ? "* Unsaved changes | " : "") + message));
   console.log(paint("90", "Listener and SSH connections are not implemented yet."));
 }
+function panelTitle(title) {
+  console.log("\n" + paint("94", "═".repeat(48)));
+  console.log(paint("97;44", ("  " + title).padEnd(48)));
+  console.log(paint("94", "═".repeat(48)));
+}
+function settingLine(label, value) {
+  console.log("  " + paint("96", label.padEnd(22)) + paint("97;1", String(value)));
+}
 function chooseSection(index) {
   section = (index + sections.length) % sections.length;
   selected = 0;
@@ -55,10 +63,12 @@ function question(label, value) {
   });
 }
 async function editServer() {
-  console.log("\n" + "─".repeat(38) + "\nSERVER SETTINGS\n" + "─".repeat(38));
-  console.log("Listener IP:       " + cfg.server.host);
-  console.log("Port:              " + cfg.server.port);
-  console.log("Maximum sessions:  " + cfg.server.maxSessions + "\n");
+  panelTitle("SERVER SETTINGS");
+  settingLine("Listener IP", cfg.server.host);
+  settingLine("Port", cfg.server.port);
+  settingLine("Maximum sessions", cfg.server.maxSessions);
+  console.log(paint("90", "  ────────────────────────────────────────────"));
+  console.log(paint("93", "  Enter values below (Enter keeps current value).\n"));
   const next = { ...cfg.server };
   next.host = await question("Listener IP (127.0.0.1 local, 0.0.0.0 LAN)", next.host);
   next.port = Number(await question("Port", next.port));
@@ -84,17 +94,13 @@ async function listeningMode() {
   message = "Listening mode set; F2 to save. Network listener is not implemented.";
 }
 async function editClients() {
-  console.log("\n" + "─".repeat(38));
-  console.log("BBS CLIENT IDENTIFIERS");
-  console.log("─".repeat(38));
-  console.log("Configured clients:\n");
-  if (!cfg.clients.length) console.log("  (none)");
-  else cfg.clients.forEach((client, index) => console.log("  " + (index + 1) + ". " + client.id));
-  console.log("\n" + "─".repeat(38));
-  console.log("A - Add client");
-  console.log("E - Edit client");
-  console.log("D - Delete client");
-  console.log("C - Cancel\n");
+  panelTitle("BBS CLIENT IDENTIFIERS");
+  console.log(paint("96;1", "  Configured clients:\n"));
+  if (!cfg.clients.length) console.log(paint("90", "  (none)"));
+  else cfg.clients.forEach((client, index) => console.log("  " + paint("93", String(index + 1).padStart(2) + ".") + " " + paint("97;1", client.id)));
+  console.log("\n" + paint("94", "─".repeat(48)));
+  console.log("  " + paint("92;1", "A") + " - Add client       " + paint("96;1", "E") + " - Edit client");
+  console.log("  " + paint("91;1", "D") + " - Delete client    " + paint("90;1", "C") + " - Cancel\n");
   const action = (await question("Action: (a)dd, (e)dit, (d)elete, (c)ancel", "c")).toLowerCase();
   if (action === "c") return;
   if (action === "d" || action === "e") {
