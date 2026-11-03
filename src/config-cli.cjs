@@ -55,6 +55,10 @@ function question(label, value) {
   });
 }
 async function editServer() {
+  console.log("\n" + "─".repeat(38) + "\nSERVER SETTINGS\n" + "─".repeat(38));
+  console.log("Listener IP:       " + cfg.server.host);
+  console.log("Port:              " + cfg.server.port);
+  console.log("Maximum sessions:  " + cfg.server.maxSessions + "\n");
   const next = { ...cfg.server };
   next.host = await question("Listener IP (127.0.0.1 local, 0.0.0.0 LAN)", next.host);
   next.port = Number(await question("Port", next.port));
@@ -64,7 +68,11 @@ async function editServer() {
   message = "Server settings updated in memory; F2 to save.";
 }
 async function listeningMode() {
-  console.log("\n1 Local only (127.0.0.1)\n2 Network (0.0.0.0)\n3 Advanced (specific IP)");
+  console.log("\n" + "─".repeat(38) + "\nLISTENING MODE\n" + "─".repeat(38));
+  console.log("Current: " + cfg.server.host + "\n");
+  console.log("1 - Local only (127.0.0.1)");
+  console.log("2 - Network (0.0.0.0)");
+  console.log("3 - Advanced (specific IP)\n");
   const mode = await question("Mode", "1");
   let host;
   if (mode === "1") host = "127.0.0.1";
@@ -114,7 +122,9 @@ async function editClients() {
   message = "BBS client added in memory.";
 }
 async function editGames() {
-  console.log("Games: " + cfg.games.map(g => g.id + (g.enabled ? " [on]" : " [off]")).join(", "));
+  console.log("\n" + "─".repeat(38) + "\nDOOR GAME CATALOG\n" + "─".repeat(38));
+  cfg.games.forEach((game, index) => console.log("  " + (index + 1) + ". " + game.id + " [" + (game.enabled ? "enabled" : "disabled") + "]"));
+  console.log("\nEnter a game ID to toggle its status.\n");
   const id = await question("Game ID to toggle (blank cancels)");
   if (!id) return;
   const games = cfg.games.map(g => g.id === id ? { ...g, enabled: !g.enabled } : g);
