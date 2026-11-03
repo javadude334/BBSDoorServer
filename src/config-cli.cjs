@@ -12,10 +12,10 @@ async function ask(prompt, current) {
   return answer || String(current);
 }
 const ansi = Boolean(stdout.isTTY && !process.env.NO_COLOR);
-const color = (code, value) => ansi ? "\\x1b[" + code + "m" + value + "\\x1b[0m" : value;
+const color = (code, value) => ansi ? "\x1b[" + code + "m" + value + "\x1b[0m" : value;
 function renderMenu() {
   const width = Math.max(40, Math.min(stdout.columns || 80, 92));
-  if (ansi) stdout.write("\\x1b[2J\\x1b[H");
+  if (ansi) stdout.write("\x1b[2J\x1b[H");
   const bar = "═".repeat(width - 2);
   console.log(color("94", "╔" + bar + "╗"));
   console.log(color("97;44", "  BBS DOORS SERVER".padEnd(width)));
