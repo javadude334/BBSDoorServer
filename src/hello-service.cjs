@@ -2,6 +2,7 @@
 const http = require("node:http");
 const { timingSafeEqual } = require("node:crypto");
 const { read } = require("./config-store.cjs");
+const { installation } = require("./installation.cjs");
 const path = require("node:path");
 const file = path.resolve(__dirname, "../config/server.json");
 const validName = value => typeof value === "string" && /^[a-zA-Z0-9 _.-]{1,40}$/.test(value);
@@ -37,7 +38,7 @@ if (require.main === module) {
     const config = read(file);
     // Deliberately bind to loopback even if a LAN listener was configured:
     // this proof-of-concept uses HTTP, not SSH or TLS.
-    const server = createService(config, process.env.BBS_DOOR_TOKEN);
+    const server = createService(config, installation());
     server.listen(config.server.port, "127.0.0.1", () => {
       console.log("Hello World test listener: http://127.0.0.1:" + config.server.port);
       console.log("Loopback only. Use an SSH tunnel for access from another VM.");
