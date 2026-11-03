@@ -1,66 +1,167 @@
 "use strict";
 const path = require("node:path");
-const readline = require("node:readline/promises");
+const readline = require("node:readline");
 const { stdin, stdout } = require("node:process");
 const { read, save, validate } = require("./config-store.cjs");
 const file = path.resolve(__dirname, "../config/server.json");
-const rl = readline.createInterface({ input: stdin, output: stdout });
+const sections = [
+  { name: "Configuration", items: ["Server settings", "BBS client identifiers", "Save settings"] },
+  { name: "Networking", items: ["Listening mode", "BBS client identifiers"] },
+  { name: "Doors", items: ["Door game catalog"] },
+  { name: "Tools", items: ["Validate settings", "Save settings"] },
+  { name: "Help", items: ["Keyboard help", "About"] },
+  { name: "Exit", items: ["Exit configuration"] }
+];
 let cfg;
-try { cfg = read(file); } catch (e) { console.error("Configuration error:", e.message); process.exitCode = 1; rl.close(); }
-async function ask(prompt, current) {
-  const answer = (await rl.question(prompt + " [" + current + "]: ")).trim();
-  return answer || String(current);
+try { cfg = read(file); } catch (error) {
+  console.error("Cannot load configuration:", error.message);
+  process.exit(1);
 }
-const ansi = Boolean(stdout.isTTY && !process.env.NO_COLOR);
-const color = (code, value) => ansi ? "\x1b[" + code + "m" + value + "\x1b[0m" : value;
-function renderMenu() {
-  const width = Math.max(40, Math.min(stdout.columns || 80, 92));
-  if (ansi) stdout.write("\x1b[2J\x1b[H");
-  const bar = "═".repeat(width - 2);
-  console.log(color("94", "╔" + bar + "╗"));
-  console.log(color("97;44", "  BBS DOORS SERVER".padEnd(width)));
-  console.log(color("30;47", " Configuration  Networking  Doors  Tools  Help  Exit ".padEnd(width)));
-  console.log(color("94", "╚" + bar + "╝"));
-  console.log();
-  console.log(color("96;1", "  ██████╗ ██████╗ ███████╗"));
-  console.log(color("94;1", "  ██╔══██╗██╔══██╗██╔════╝"));
-  console.log(color("96;1", "  ██████╔╝██████╔╝███████╗  DOORS SERVER"));
-  console.log(color("94;1", "  ██╔══██╗██╔══██╗╚════██║  CONFIGURATION"));
-  console.log(color("96;1", "  ██████╔╝██████╔╝███████║"));
-  console.log(color("94;1", "  ╚═════╝ ╚═════╝ ╚══════╝"));
-  console.log(color("94", "  ┌" + "─".repeat(Math.min(width - 6, 53)) + "┐"));
-  for (const item of [
-    "1. Server settings", "2. BBS client identifiers", "3. Door game catalog",
-    "4. Validate settings", "5. Save settings", "0. Exit"
-  ]) console.log(color("97", "  │  " + item.padEnd(Math.min(width - 10, 51)) + "│"));
-  console.log(color("94", "  └" + "─".repeat(Math.min(width - 6, 53)) + "┘"));
-  console.log(color("90", "  (Main) -> Arrow-key navigation planned; select by number."));
-  console.log(color("93", "  Network listener and door execution are not enabled."));
+const original = JSON.stringify(cfg);
+let saved = original, section = 0, selected = 0, message = "Ready";
+const tty = Boolean(stdin.isTTY && stdout.isTTY);
+const colors = tty && !process.env.NO_COLOR;
+const paint = (code, value) => colors ? "\x1b[" + code + "m" + value + "\x1b[0m" : value;
+const dirty = () => JSON.stringify(cfg) !== saved;
+function screen() {
+  const width = Math.max(40, Math.min(stdout.columns || 80, 90));
+  if (tty) stdout.write("\x1b[2J\x1b[H");
+  console.log(paint("97;44", " BBS DOORS SERVER CONFIGURATION ".padEnd(width)));
+  console.log(sections.map((s, i) => i === section ? paint("30;47", " " + s.name + " ") : " " + s.name + " ").join(""));
+  console.log(paint("94", "═".repeat(width)));
+  console.log(paint("96;1", "\n   BBS DOORS SERVER"));
+  console.log(paint("94", "   Configuration Utility\n"));
+  const items = sections[section].items;
+  items.forEach((item, i) => console.log(i === selected ?
+    paint("97;44", "  > " + item.padEnd(Math.min(width - 6, 50))) : "    " + item));
+  console.log("\n" + paint("90", "─".repeat(width)));
+  console.log(paint("96", "← → Menu   ↑ ↓ Select   Enter Open   Esc Back   F1 Help   F2 Save   Alt+X Exit"));
+  console.log(paint("93", (dirty() ? "* Unsaved changes | " : "") + message));
+  console.log(paint("90", "Listener and SSH connections are not implemented yet."));
 }
-async function run() {
-  while (true) {
-    renderMenu();
-    const choice = (await rl.question("Select: ")).trim();
+function chooseSection(index) {
+  section = (index + sections.length) % sections.length;
+  selected = 0;
+}
+function question(label, value) {
+  return new Promise(resolve => {
+    const rl = readline.createInterface({ input: stdin, output: stdout, terminal: tty });
+    rl.question(label + (value === undefined ? "" : " [" + value + "]") + ": ", answer => {
+      rl.close();
+      resolve(answer.trim() || String(value === undefined ? "" : value));
+    });
+  });
+}
+async function editServer() {
+  const next = { ...cfg.server };
+  next.host = await question("Listener IP (127.0.0.1 local, 0.0.0.0 LAN)", next.host);
+  next.port = Number(await question("Port", next.port));
+  next.maxSessions = Number(await question("Maximum sessions", next.maxSessions));
+  validate({ ...cfg, server: next });
+  cfg.server = next;
+  message = "Server settings updated in memory; F2 to save.";
+}
+async function listeningMode() {
+  console.log("\n1 Local only (127.0.0.1)\n2 Network (0.0.0.0)\n3 Advanced (specific IP)");
+  const mode = await question("Mode", "1");
+  let host;
+  if (mode === "1") host = "127.0.0.1";
+  else if (mode === "2") host = "0.0.0.0";
+  else if (mode === "3") host = await question("Bind to VM's local IPv4 address", cfg.server.host);
+  else throw Error("Choose 1, 2, or 3");
+  validate({ ...cfg, server: { ...cfg.server, host } });
+  cfg.server.host = host;
+  message = "Listening mode set; F2 to save. Network listener is not implemented.";
+}
+async function editClients() {
+  console.log("Current BBS client IDs: " + (cfg.clients.map(c => c.id).join(", ") || "(none)"));
+  const id = await question("Add client ID (blank cancels)");
+  if (!id) return;
+  const clients = [...cfg.clients, { id }];
+  validate({ ...cfg, clients });
+  cfg.clients = clients;
+  message = "BBS client added in memory.";
+}
+async function editGames() {
+  console.log("Games: " + cfg.games.map(g => g.id + (g.enabled ? " [on]" : " [off]")).join(", "));
+  const id = await question("Game ID to toggle (blank cancels)");
+  if (!id) return;
+  const games = cfg.games.map(g => g.id === id ? { ...g, enabled: !g.enabled } : g);
+  if (!games.some(g => g.id === id)) throw Error("Unknown game ID");
+  validate({ ...cfg, games });
+  cfg.games = games;
+  message = "Game catalog updated in memory; game execution is not yet implemented.";
+}
+async function confirmExit() {
+  if (!dirty()) return true;
+  const answer = (await question("Unsaved changes: (s)ave, (d)iscard, (c)ancel", "c")).toLowerCase();
+  if (answer === "s") { save(file, cfg); saved = JSON.stringify(cfg); return true; }
+  return answer === "d";
+}
+async function execute() {
+  const item = sections[section].items[selected];
+  if (item === "Server settings") await editServer();
+  else if (item === "Listening mode") await listeningMode();
+  else if (item === "BBS client identifiers") await editClients();
+  else if (item === "Door game catalog") await editGames();
+  else if (item === "Validate settings") { validate(cfg); message = "Configuration valid."; }
+  else if (item === "Save settings") { save(file, cfg); saved = JSON.stringify(cfg); message = "Saved " + file; }
+  else if (item === "Keyboard help") message = "Arrow keys move, Enter selects, F2 saves, Esc returns, Alt+X exits.";
+  else if (item === "About") message = "BBS Doors Server configuration — network service pending.";
+  else if (item === "Exit configuration") return await confirmExit();
+  return false;
+}
+async function interactive() {
+  readline.emitKeypressEvents(stdin);
+  stdin.setRawMode(true);
+  stdin.resume();
+  screen();
+  let busy = false;
+  const onKey = async (str, key = {}) => {
+    if (busy) return;
+    busy = true;
     try {
-      if (choice === "0") break;
-      if (choice === "1") {
-        cfg.server.host = await ask("Listen address (future listener)", cfg.server.host);
-        cfg.server.port = Number(await ask("Port", cfg.server.port));
-        cfg.server.maxSessions = Number(await ask("Maximum sessions", cfg.server.maxSessions));
-      } else if (choice === "2") {
-        console.log("Authorized client IDs:", cfg.clients.map(c => c.id).join(", ") || "(none)");
-        const id = (await rl.question("Add BBS client ID (blank to cancel): ")).trim();
-        if (id) cfg.clients.push({ id });
-      } else if (choice === "3") {
-        cfg.games.forEach((g,i) => console.log(i + 1, g.id, g.enabled ? "enabled" : "disabled"));
-        const id = (await rl.question("Game ID to toggle (blank to cancel): ")).trim();
-        const game = cfg.games.find(g => g.id === id);
-        if (game) game.enabled = !game.enabled;
-        else if (id) console.log("Unknown game. Game execution is not implemented.");
-      } else if (choice === "4") { validate(cfg); console.log("Configuration valid."); }
-      else if (choice === "5") { save(file, cfg); console.log("Saved:", file); }
-      else console.log("Unknown option.");
-    } catch (e) { console.error("Validation/action failed:", e.message); }
+      if (key.ctrl && key.name === "c") { if (await promptExit()) return; }
+      else if (key.meta && key.name === "x") { if (await promptExit()) return; }
+      else if (key.name === "left") chooseSection(section - 1);
+      else if (key.name === "right") chooseSection(section + 1);
+      else if (key.name === "up") selected = (selected + sections[section].items.length - 1) % sections[section].items.length;
+      else if (key.name === "down") selected = (selected + 1) % sections[section].items.length;
+      else if (key.name === "escape") chooseSection(0);
+      else if (key.name === "f1") { chooseSection(4); message = "Select Keyboard help and press Enter."; }
+      else if (key.name === "f2") { save(file, cfg); saved = JSON.stringify(cfg); message = "Configuration saved."; }
+      else if (key.name === "return" || key.name === "enter") {
+        stdin.removeListener("keypress", onKey);
+        stdin.setRawMode(false);
+        try { if (await execute()) { finish(); return; } }
+        finally { if (!finished) { stdin.setRawMode(true); stdin.on("keypress", onKey); } }
+      }
+    } catch (error) { message = "Error: " + error.message; }
+    finally { if (!finished) { screen(); busy = false; } }
+  };
+  let finished = false;
+  function finish() { finished = true; stdin.removeListener("keypress", onKey); stdin.setRawMode(false); stdin.pause(); console.log("\nGoodbye."); }
+  async function promptExit() {
+    stdin.removeListener("keypress", onKey);
+    stdin.setRawMode(false);
+    try { const exit = await confirmExit(); if (exit) finish(); return exit; }
+    finally { if (!finished) { stdin.setRawMode(true); stdin.on("keypress", onKey); } }
+  }
+  stdin.on("keypress", onKey);
+  stdout.on("resize", () => { if (!finished && !busy) screen(); });
+}
+async function fallback() {
+  console.log("Basic text mode (terminal does not support interactive keys).");
+  while (true) {
+    console.log("\n" + sections.flatMap(s => s.items).filter((v,i,a) => a.indexOf(v) === i).map((v,i) => (i + 1) + ". " + v).join("\n"));
+    const options = sections.flatMap(s => s.items).filter((v,i,a) => a.indexOf(v) === i);
+    const choice = await question("Choose option or 0 to exit");
+    if (choice === "0") { if (await confirmExit()) break; continue; }
+    const item = options[Number(choice) - 1];
+    if (!item) continue;
+    const target = sections.findIndex(s => s.items.includes(item));
+    section = target; selected = sections[target].items.indexOf(item);
+    try { if (await execute()) break; console.log(message); } catch (e) { console.error(e.message); }
   }
 }
-if (cfg) run().catch(e => { console.error(e.message); process.exitCode = 1; }).finally(() => rl.close());
+(tty ? interactive() : fallback()).catch(error => { console.error(error); process.exitCode = 1; if (tty && stdin.isRaw) stdin.setRawMode(false); });
