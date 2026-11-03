@@ -4,6 +4,7 @@
   "private": true,
   "description": "Shared door server protocol foundation; no game execution",
   "scripts": {
+    "config": "node src/config-cli.cjs",
     "test": "node --test tests/*.test.cjs",
     "start": "node src/server.cjs"
   },
