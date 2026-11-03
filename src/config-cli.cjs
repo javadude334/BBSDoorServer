@@ -11,15 +11,35 @@ async function ask(prompt, current) {
   const answer = (await rl.question(prompt + " [" + current + "]: ")).trim();
   return answer || String(current);
 }
+const ansi = Boolean(stdout.isTTY && !process.env.NO_COLOR);
+const color = (code, value) => ansi ? "\\x1b[" + code + "m" + value + "\\x1b[0m" : value;
+function renderMenu() {
+  const width = Math.max(40, Math.min(stdout.columns || 80, 92));
+  if (ansi) stdout.write("\\x1b[2J\\x1b[H");
+  const bar = "═".repeat(width - 2);
+  console.log(color("94", "╔" + bar + "╗"));
+  console.log(color("97;44", "  BBS DOORS SERVER".padEnd(width)));
+  console.log(color("30;47", " Configuration  Networking  Doors  Tools  Help  Exit ".padEnd(width)));
+  console.log(color("94", "╚" + bar + "╝"));
+  console.log();
+  console.log(color("96;1", "  ██████╗ ██████╗ ███████╗"));
+  console.log(color("94;1", "  ██╔══██╗██╔══██╗██╔════╝"));
+  console.log(color("96;1", "  ██████╔╝██████╔╝███████╗  DOORS SERVER"));
+  console.log(color("94;1", "  ██╔══██╗██╔══██╗╚════██║  CONFIGURATION"));
+  console.log(color("96;1", "  ██████╔╝██████╔╝███████║"));
+  console.log(color("94;1", "  ╚═════╝ ╚═════╝ ╚══════╝"));
+  console.log(color("94", "  ┌" + "─".repeat(Math.min(width - 6, 53)) + "┐"));
+  for (const item of [
+    "1. Server settings", "2. BBS client identifiers", "3. Door game catalog",
+    "4. Validate settings", "5. Save settings", "0. Exit"
+  ]) console.log(color("97", "  │  " + item.padEnd(Math.min(width - 10, 51)) + "│"));
+  console.log(color("94", "  └" + "─".repeat(Math.min(width - 6, 53)) + "┘"));
+  console.log(color("90", "  (Main) -> Arrow-key navigation planned; select by number."));
+  console.log(color("93", "  Network listener and door execution are not enabled."));
+}
 async function run() {
   while (true) {
-    console.log("\n=== BBS Doors Server Configuration ===");
-    console.log("1. Server settings");
-    console.log("2. BBS client identifiers");
-    console.log("3. Door game catalog");
-    console.log("4. Validate settings");
-    console.log("5. Save settings");
-    console.log("0. Exit");
+    renderMenu();
     const choice = (await rl.question("Select: ")).trim();
     try {
       if (choice === "0") break;
