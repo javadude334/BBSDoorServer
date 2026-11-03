@@ -10,7 +10,7 @@ const sections = [
   { name: "Configuration", items: ["Server settings", "BBS client identifiers", "Save settings"] },
   { name: "Networking", items: ["Listening mode", "BBS client identifiers"] },
   { name: "Doors", items: ["Door game catalog"] },
-  { name: "Tools", items: ["Validate settings", "Save settings"] },
+  { name: "Tools", items: ["Validate settings", "Installation ID", "Save settings"] },
   { name: "Help", items: ["Keyboard help", "About"] },
   { name: "Exit", items: ["Exit configuration"] }
 ];
@@ -37,7 +37,7 @@ function screen() {
   items.forEach((item, i) => console.log(i === selected ?
     paint("97;44", "  > " + item.padEnd(Math.min(width - 6, 50))) : "    " + item));
   console.log("\n" + paint("90", "─".repeat(width)));
-  console.log(paint("96", "← → Menu   ↑ ↓ Select   Enter Open   Esc Back   F1 Help   F2 Save   Alt+X Exit"));
+  console.log(paint("96", "← → Menu   ↑ ↓ Select   Enter Open   Esc Back   F1 Help   F2 Save   Alt+X Exit (or Exit menu)"));
   console.log(paint("93", (dirty() ? "* Unsaved changes | " : "") + message));
   console.log(paint("90", "Listener and SSH connections are not implemented yet."));
 }
@@ -77,6 +77,25 @@ async function listeningMode() {
 }
 async function editClients() {
   console.log("Current BBS client IDs: " + (cfg.clients.map(c => c.id).join(", ") || "(none)"));
+  const action = (await question("Action: (a)dd, (e)dit, (d)elete, (c)ancel", "c")).toLowerCase();
+  if (action === "c") return;
+  if (action === "d" || action === "e") {
+    const oldId = await question("Existing client ID");
+    if (!cfg.clients.some(c => c.id === oldId)) throw Error("Client not found");
+    if (action === "d") {
+      if ((await question("Type DELETE to remove " + oldId)).toUpperCase() !== "DELETE") return;
+      cfg.clients = cfg.clients.filter(c => c.id !== oldId);
+      message = "BBS client deleted; F2 to save.";
+      return;
+    }
+    const newId = await question("New client ID", oldId);
+    const clients = cfg.clients.map(c => c.id === oldId ? { ...c, id: newId } : c);
+    validate({ ...cfg, clients });
+    cfg.clients = clients;
+    message = "BBS client renamed; F2 to save.";
+    return;
+  }
+  if (action !== "a") throw Error("Choose a, e, d, or c");
   const id = await question("Add client ID (blank cancels)");
   if (!id) return;
   const clients = [...cfg.clients, { id }];
@@ -108,6 +127,7 @@ async function execute() {
   else if (item === "Door game catalog") await editGames();
   else if (item === "Validate settings") { validate(cfg); message = "Configuration valid."; }
   else if (item === "Save settings") { save(file, cfg); saved = JSON.stringify(cfg); message = "Saved " + file; }
+  else if (item === "Installation ID") message = "Installation ID: " + installationId.slice(0, 12) + "… (private; saved in config/secrets.json)";
   else if (item === "Keyboard help") message = "Arrow keys move, Enter selects, F2 saves, Esc returns, Alt+X exits.";
   else if (item === "About") message = "BBS Doors Server configuration — network service pending.";
   else if (item === "Exit configuration") return await confirmExit();
@@ -124,7 +144,7 @@ async function interactive() {
     busy = true;
     try {
       if (key.ctrl && key.name === "c") { if (await promptExit()) return; }
-      else if (key.meta && key.name === "x") { if (await promptExit()) return; }
+      else if ((key.meta && key.name === "x") || (key.alt && key.name === "x") || str === "\x1bx" || str === "\x18") { if (await promptExit()) return; }
       else if (key.name === "left") chooseSection(section - 1);
       else if (key.name === "right") chooseSection(section + 1);
       else if (key.name === "up") selected = (selected + sections[section].items.length - 1) % sections[section].items.length;
