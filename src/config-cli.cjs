@@ -76,7 +76,17 @@ async function listeningMode() {
   message = "Listening mode set; F2 to save. Network listener is not implemented.";
 }
 async function editClients() {
-  console.log("Current BBS client IDs: " + (cfg.clients.map(c => c.id).join(", ") || "(none)"));
+  console.log("\n" + "─".repeat(38));
+  console.log("BBS CLIENT IDENTIFIERS");
+  console.log("─".repeat(38));
+  console.log("Configured clients:\n");
+  if (!cfg.clients.length) console.log("  (none)");
+  else cfg.clients.forEach((client, index) => console.log("  " + (index + 1) + ". " + client.id));
+  console.log("\n" + "─".repeat(38));
+  console.log("A - Add client");
+  console.log("E - Edit client");
+  console.log("D - Delete client");
+  console.log("C - Cancel\n");
   const action = (await question("Action: (a)dd, (e)dit, (d)elete, (c)ancel", "c")).toLowerCase();
   if (action === "c") return;
   if (action === "d" || action === "e") {
