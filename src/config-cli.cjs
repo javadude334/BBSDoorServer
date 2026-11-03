@@ -134,7 +134,7 @@ async function interactive() {
         stdin.removeListener("keypress", onKey);
         stdin.setRawMode(false);
         try { if (await execute()) { finish(); return; } }
-        finally { if (!finished) { stdin.setRawMode(true); stdin.on("keypress", onKey); } }
+        finally { if (!finished) { stdin.setRawMode(true); stdin.resume(); stdin.on("keypress", onKey); } }
       }
     } catch (error) { message = "Error: " + error.message; }
     finally { if (!finished) { screen(); busy = false; } }
@@ -145,7 +145,7 @@ async function interactive() {
     stdin.removeListener("keypress", onKey);
     stdin.setRawMode(false);
     try { const exit = await confirmExit(); if (exit) finish(); return exit; }
-    finally { if (!finished) { stdin.setRawMode(true); stdin.on("keypress", onKey); } }
+    finally { if (!finished) { stdin.setRawMode(true); stdin.resume(); stdin.on("keypress", onKey); } }
   }
   stdin.on("keypress", onKey);
   stdout.on("resize", () => { if (!finished && !busy) screen(); });
