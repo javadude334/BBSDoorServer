@@ -25,46 +25,74 @@ const dirty = () => JSON.stringify(cfg) !== saved;
 const size = () => ({ w: Math.max(50, stdout.columns || 80), h: Math.max(20, stdout.rows || 25) });
 function draw() {
   const { w, h } = size();
-  const width = Math.min(w - 2, 100), lines = Array.from({ length: Math.min(h - 1, 40) }, () => " ".repeat(width));
+  const width = Math.min(w - 2, 100);
+  const height = Math.min(h - 1, 40);
+  // Each terminal cell stores its own style. ANSI sequences never count as columns.
+  const cells = Array.from({ length: height }, () =>
+    Array.from({ length: width }, () => ({ char: " ", style: "" })));
   const put = (y, x, value, style = "") => {
-    if (y < 0 || y >= lines.length || x >= width) return;
-    const s = String(value).slice(0, Math.max(0, width - x));
-    lines[y] = lines[y].slice(0, x) + (style ? color(style, s) : s) + lines[y].slice(x + s.length);
+    if (y < 0 || y >= height) return;
+    for (const char of String(value)) {
+      if (x >= 0 && x < width) cells[y][x] = { char, style };
+      x++;
+      if (x >= width) break;
+    }
   };
-  put(0, 0, " BBS DOORS SERVER CONFIGURATION ".padEnd(width), "97;44");
+  const fill = (y, x, count, style) => put(y, x, " ".repeat(Math.max(0, count)), style);
+  fill(0, 0, width, "97;44");
+  put(0, 1, "BBS DOORS SERVER CONFIGURATION", "97;44");
+  fill(1, 0, width, "30;47");
   let mx = 1;
-  menus.forEach(([name], index) => { put(1, mx, " " + name + " ", index === menu ? "30;47" : "30;47"); mx += name.length + 3; });
+  menus.forEach(([name], index) => {
+    put(1, mx, " " + name + " ", index === menu ? "97;44" : "30;47");
+    mx += name.length + 3;
+  });
   put(2, 0, "═".repeat(width), "94");
   put(4, 3, "BBS DOORS SERVER", "96;1");
   put(5, 3, "Configuration Utility", "94");
-  put(7, 3, "Select a menu option to configure the server.", "90");
-  put(lines.length - 3, 0, "─".repeat(width), "90");
-  put(lines.length - 2, 0, "←→ Menu   ↑↓ Select   Enter Open/Edit   Esc Back   F1 Help   F2 Save   Alt+X Exit", "96");
-  put(lines.length - 1, 0, (dirty() ? "* Unsaved | " : "") + message, "93");
+  if (view === "menu") put(7, 3, "Select a menu option to configure the server.", "90");
+  put(height - 3, 0, "─".repeat(width), "90");
+  put(height - 2, 0, "←→ Menu   ↑↓ Select   Enter Open/Edit   Esc Back   F1 Help   F2 Save   Alt+X Exit", "96");
+  put(height - 1, 0, (dirty() ? "* Unsaved | " : "") + message, "93");
   if (view === "menu") {
     let x = 1;
     for (let i = 0; i < menu; i++) x += menus[i][0].length + 3;
     const choices = menus[menu][1];
-    const mw = Math.min(width - x - 1, Math.max(22, ...choices.map(v => v.length + 4)));
-    choices.forEach((label, i) => put(3 + i, x, (" " + label).padEnd(mw), i === item ? "97;44" : "30;47"));
+    const mw = Math.min(width - x, Math.max(22, ...choices.map(v => v.length + 4)));
+    choices.forEach((label, i) => {
+      fill(3 + i, x, mw, i === item ? "97;44" : "30;47");
+      put(3 + i, x + 1, label, i === item ? "97;44" : "30;47");
+    });
   } else {
     const entries = fields();
-    const panelW = Math.min(width - 6, 74), px = Math.max(2, Math.floor((width - panelW) / 2));
-    const visible = Math.max(3, Math.min(entries.length, lines.length - 11));
+    const panelW = Math.min(width - 6, 74);
+    const px = Math.max(2, Math.floor((width - panelW) / 2));
+    const visible = Math.max(3, Math.min(entries.length, height - 12));
     const py = 7, panelH = visible + 4;
-    for (let y = py; y < py + panelH; y++) put(y, px, " ".repeat(panelW), "30;47");
+    for (let y = py; y < py + panelH; y++) fill(y, px, panelW, "30;47");
     const heading = title();
     put(py, px + Math.max(1, Math.floor((panelW - heading.length) / 2)), " " + heading + " ", "97;44");
     if (field < scroll) scroll = field;
     if (field >= scroll + visible) scroll = field - visible + 1;
     entries.slice(scroll, scroll + visible).forEach((entry, index) => {
       const row = py + 2 + index, selected = scroll + index === field;
-      const value = String(entry.value);
-      put(row, px + 2, entry.label.padEnd(24), selected ? "97;44" : "30;47");
-      put(row, px + 27, value.slice(0, panelW - 30), selected ? "97;44" : "94;47");
+      if (selected) fill(row, px + 2, panelW - 4, "97;44");
+      put(row, px + 3, entry.label.slice(0, 22), selected ? "97;44" : "30;47");
+      put(row, px + 27, String(entry.value).slice(0, panelW - 30), selected ? "97;44" : "94;47");
     });
     put(py + panelH - 1, px + 2, "Enter edit/toggle  Esc menu".slice(0, panelW - 4), "30;47");
   }
+  const lines = cells.map(row => {
+    let out = "", current = "";
+    for (const cell of row) {
+      if (cell.style !== current) {
+        out += ansi ? (cell.style ? "\x1b[" + cell.style + "m" : "\x1b[0m") : "";
+        current = cell.style;
+      }
+      out += cell.char;
+    }
+    return out + (ansi ? "\x1b[0m" : "");
+  });
   stdout.write("\x1b[2J\x1b[H" + lines.join("\n"));
 }
 function title() { return menus[menu][1][item].toUpperCase(); }
