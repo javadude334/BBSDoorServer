@@ -13,7 +13,7 @@ const menus = [
   ["Configuration", ["Server Settings", "BBS Clients"]],
   ["Networking", ["Listening Mode"]],
   ["Doors", ["Door Catalog"]],
-  ["Tools", ["Validate", "Installation ID", "Save"]],
+  ["Tools", ["Validate", "Installation ID"]],
   ["Help", ["Keyboard Help", "About"]],
   ["Exit", ["Exit Configuration"]]
 ];
@@ -93,7 +93,7 @@ function draw() {
     }
     return out + (ansi ? "\x1b[0m" : "");
   });
-  stdout.write("\x1b[2J\x1b[H" + lines.join("\n"));
+  stdout.write("\x1b[0m\x1b[2J\x1b[H" + lines.join("\n") + "\x1b[0m");
 }
 function title() { return menus[menu][1][item].toUpperCase(); }
 function fields() {
@@ -165,10 +165,10 @@ async function editField(entry) {
 }
 async function exit() {
   if (dirty()) {
-    const choice = (await prompt("Unsaved changes: (s)ave, (d)iscard, (c)ancel", "c")).toLowerCase();
-    if (choice === "c") return;
+    const choice = (await prompt("Save changes before exiting? (s)ave and exit, (d)iscard, (c)ancel", "c")).toLowerCase();
+    if (choice === "c") { message = "Exit canceled."; return; }
     if (choice === "s") saveNow();
-    else if (choice !== "d") return;
+    else if (choice !== "d") { message = "Exit canceled."; return; }
   }
   finished = true; stdin.removeListener("keypress", onKey); stdin.setRawMode(false); stdin.pause(); stdout.write("\x1b[2J\x1b[HGoodbye.\n");
 }
@@ -189,7 +189,6 @@ async function onKey(str, key = {}) {
       else if (key.name === "return" || key.name === "enter") {
         const action = menus[menu][1][item];
         if (action === "Exit Configuration") await exit();
-        else if (action === "Save") saveNow();
         else if (action === "Validate") { validate(cfg); message = "Configuration valid."; }
         else { view = "panel"; field = 0; scroll = 0; }
       }
